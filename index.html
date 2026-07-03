@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP B1 Requirement Console</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16233B; --ink-2:#33415C; --paper:#F2F4F8; --surface:#FFFFFF;
+  --line:#D8DEE9; --cobalt:#2450A8; --cobalt-soft:#E7EDFA;
+  --amber:#B45309; --amber-bg:#FEF3E2; --green:#15803D; --green-bg:#E8F5EC;
+  --blue:#1D4ED8; --blue-bg:#E8EEFC; --grey:#5B6472; --grey-bg:#EEF0F4;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --sans:'IBM Plex Sans',system-ui,Segoe UI,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.45}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--cobalt);outline-offset:0;border-color:var(--cobalt)}
+textarea{resize:vertical;min-height:64px}
+
+/* ---------- Top bar ---------- */
+.topbar{background:var(--ink);color:#fff;padding:0 20px;display:flex;align-items:center;gap:16px;height:58px;position:sticky;top:0;z-index:40}
+.brand{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.brand h1{font-size:15px;font-weight:600;letter-spacing:.2px}
+.brand .tag{font-family:var(--mono);font-size:10.5px;color:#9FB2D6;letter-spacing:.8px;text-transform:uppercase}
+.conn{margin-left:auto;display:flex;align-items:center;gap:8px}
+.conn input{width:340px;max-width:38vw;background:#223252;border-color:#3A4A6B;color:#fff;font-family:var(--mono);font-size:11.5px}
+.conn input::placeholder{color:#8291AE}
+.btn{border:none;border-radius:6px;padding:8px 14px;font-weight:600;font-size:13px}
+.btn-primary{background:var(--cobalt);color:#fff}
+.btn-primary:hover{background:#1C4290}
+.btn-ghost{background:transparent;color:var(--cobalt);border:1px solid var(--cobalt)}
+.dot{width:9px;height:9px;border-radius:50%;background:#E4572E;flex:none}
+.dot.on{background:#39C46E}
+.conn-label{font-size:12px;color:#B9C5DC;white-space:nowrap}
+
+/* ---------- Layout ---------- */
+.wrap{display:grid;grid-template-columns:264px 1fr;gap:0;min-height:calc(100vh - 58px)}
+
+/* ---------- Module rail (signature) ---------- */
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:18px 0 30px;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto}
+.rail h2{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--grey);padding:0 18px 10px}
+.mod{display:block;width:100%;text-align:left;background:none;border:none;border-left:3px solid transparent;padding:9px 18px 9px 15px}
+.mod:hover{background:var(--cobalt-soft)}
+.mod.active{background:var(--cobalt-soft);border-left-color:var(--cobalt)}
+.mod .name{font-size:12.5px;font-weight:500;color:var(--ink);display:flex;justify-content:space-between;gap:8px}
+.mod .count{font-family:var(--mono);font-size:11px;color:var(--grey)}
+.mod .bar{height:3px;background:var(--grey-bg);border-radius:2px;margin-top:6px;overflow:hidden}
+.mod .bar i{display:block;height:100%;background:var(--cobalt);width:0%}
+
+/* ---------- Main ---------- */
+.main{padding:20px 26px 60px;min-width:0}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.toolbar input[type=search]{max-width:300px}
+.toolbar select{width:auto}
+.summary{font-family:var(--mono);font-size:11.5px;color:var(--grey);margin-left:auto;white-space:nowrap}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.card-head{display:grid;grid-template-columns:92px 1fr auto;gap:12px;align-items:start;padding:12px 16px;cursor:pointer}
+.card-head:hover{background:#FAFBFD}
+.rid{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--cobalt);padding-top:2px}
+.q .cat{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--grey)}
+.q .text{font-size:13.5px;font-weight:500;margin-top:2px}
+.q .resp{font-size:12.5px;color:var(--ink-2);margin-top:5px;white-space:pre-wrap}
+.q .resp.empty{color:#98A0AE;font-style:italic}
+.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;padding-top:2px}
+.chip{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+.chip.st-Open{background:var(--amber-bg);color:var(--amber)}
+.chip.st-InDiscussion{background:var(--blue-bg);color:var(--blue)}
+.chip.st-Confirmed{background:var(--green-bg);color:var(--green)}
+.chip.st-Deferred,.chip.st-Closed{background:var(--grey-bg);color:var(--grey)}
+.chip.gap{background:#FBE6E6;color:#B42318}
+.chip.pri{background:var(--grey-bg);color:var(--ink-2)}
+
+.editor{border-top:1px solid var(--line);background:#FAFBFD;padding:16px;display:none}
+.card.open .editor{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid .span2{grid-column:span 2}.grid .span4{grid-column:span 4}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+.ed-actions{display:flex;gap:10px;margin-top:14px;align-items:center}
+.saved-at{font-family:var(--mono);font-size:11px;color:var(--grey);margin-left:auto}
+
+.empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:48px 20px;text-align:center;color:var(--grey)}
+.empty-state b{color:var(--ink);display:block;font-size:15px;margin-bottom:6px}
+
+/* ---------- Toast & overlay ---------- */
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,80px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;transition:transform .25s;z-index:60}
+.toast.show{transform:translate(-50%,0)}
+.toast.err{background:#B42318}
+.loading{position:fixed;inset:0;background:rgba(22,35,59,.35);display:none;align-items:center;justify-content:center;z-index:50}
+.loading.show{display:flex}
+.loading span{background:#fff;padding:14px 22px;border-radius:8px;font-weight:600}
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  .rail{position:static;height:auto;display:flex;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:10px}
+  .rail h2{display:none}.mod{min-width:170px;border-left:none;border-bottom:3px solid transparent}
+  .mod.active{border-bottom-color:var(--cobalt)}
+  .conn input{max-width:30vw}
+  .grid{grid-template-columns:1fr 1fr}.grid .span2,.grid .span4{grid-column:span 2}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <h1>SAP B1 Requirement Console</h1>
+    <span class="tag">Workshop Capture</span>
+  </div>
+  <div class="conn">
+    <span class="dot" id="connDot"></span>
+    <span class="conn-label" id="connLabel">Not connected</span>
+    <input type="url" id="apiUrl" placeholder="Paste Google Apps Script Web App URL (ends with /exec)">
+    <button class="btn btn-primary" id="btnConnect">Connect</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="rail" id="rail">
+    <h2>Modules</h2>
+  </nav>
+
+  <main class="main">
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Search requirements…">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option>Open</option><option>In Discussion</option><option>Confirmed</option>
+        <option>Deferred</option><option>Closed</option>
+      </select>
+      <select id="gapFilter">
+        <option value="">Gaps & non-gaps</option>
+        <option value="Y">Gaps only</option>
+      </select>
+      <button class="btn btn-ghost" id="btnAdd">+ Add requirement</button>
+      <button class="btn btn-ghost" id="btnRefresh">Refresh</button>
+      <span class="summary" id="summary"></span>
+    </div>
+    <div id="list">
+      <div class="empty-state">
+        <b>Connect your Google Sheet to begin</b>
+        Paste your Apps Script Web App URL in the top bar and click Connect.
+        All questions and answers load from — and save back to — your sheet.
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="loading" id="loading"><span>Syncing with Google Sheet…</span></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+let API = '';
+let ROWS = [];
+let activeModule = '';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- Connection ---------- */
+function initApiFromHash(){
+  const m = location.hash.match(/api=([^&]+)/);
+  if (m) { $('apiUrl').value = decodeURIComponent(m[1]); connect(); }
+}
+async function connect(){
+  const url = $('apiUrl').value.trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)) {
+    toast('Enter a valid Apps Script URL ending in /exec', true); return;
+  }
+  API = url;
+  location.hash = 'api=' + encodeURIComponent(url);
+  await loadData();
+}
+async function loadData(){
+  showLoading(true);
+  try {
+    const res = await fetch(API);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Unexpected response');
+    ROWS = data.rows;
+    $('connDot').classList.add('on');
+    $('connLabel').textContent = 'Connected · ' + ROWS.length + ' requirements';
+    if (!activeModule && ROWS.length) activeModule = moduleList()[0];
+    render();
+    toast('Loaded ' + ROWS.length + ' requirements from Google Sheet');
+  } catch (err) {
+    $('connDot').classList.remove('on');
+    $('connLabel').textContent = 'Not connected';
+    toast('Could not load: ' + err.message + '. Check the URL and that the deployment allows "Anyone".', true);
+  } finally { showLoading(false); }
+}
+
+/* ---------- Rendering ---------- */
+function moduleList(){
+  return [...new Set(ROWS.map(r => r.module))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+}
+function render(){ renderRail(); renderList(); }
+
+function renderRail(){
+  const rail = $('rail');
+  rail.querySelectorAll('.mod').forEach(e => e.remove());
+  moduleList().forEach(mod => {
+    const rows = ROWS.filter(r => r.module === mod);
+    const done = rows.filter(r => r.status && r.status !== 'Open').length;
+    const btn = document.createElement('button');
+    btn.className = 'mod' + (mod === activeModule ? ' active' : '');
+    btn.innerHTML = '<div class="name"><span>' + esc(mod) + '</span>' +
+      '<span class="count">' + String(done).padStart(2,'0') + '/' + String(rows.length).padStart(2,'0') + '</span></div>' +
+      '<div class="bar"><i style="width:' + (rows.length ? Math.round(done/rows.length*100) : 0) + '%"></i></div>';
+    btn.onclick = () => { activeModule = mod; render(); };
+    rail.appendChild(btn);
+  });
+}
+
+function renderList(){
+  const q = $('search').value.trim().toLowerCase();
+  const st = $('statusFilter').value;
+  const gp = $('gapFilter').value;
+  let rows = ROWS.filter(r => r.module === activeModule);
+  if (q) rows = ROWS.filter(r =>
+    [r.reqId, r.module, r.category, r.question, r.response, r.solution, r.owner, r.notes]
+      .join(' ').toLowerCase().includes(q));
+  if (st) rows = rows.filter(r => r.status === st);
+  if (gp) rows = rows.filter(r => r.gap === gp);
+
+  $('summary').textContent = rows.length + ' shown · ' +
+    ROWS.filter(r => r.status === 'Confirmed' || r.status === 'Closed').length + '/' + ROWS.length + ' resolved overall';
+
+  const list = $('list');
+  if (!ROWS.length) return;
+  if (!rows.length) {
+    list.innerHTML = '<div class="empty-state"><b>No requirements match</b>Adjust the search or filters.</div>';
+    return;
+  }
+  list.innerHTML = rows.map(r => cardHtml(r, !!q)).join('');
+  rows.forEach(r => bindCard(r.reqId));
+}
+
+function cardHtml(r, searching){
+  const stClass = 'st-' + String(r.status || 'Open').replace(/\s/g,'');
+  return '<div class="card" id="card-' + esc(r.reqId) + '">' +
+    '<div class="card-head" data-toggle>' +
+      '<div class="rid">' + esc(r.reqId) + '</div>' +
+      '<div class="q"><div class="cat">' + esc(r.category) + (searching ? ' · ' + esc(r.module) : '') + '</div>' +
+        '<div class="text">' + esc(r.question) + '</div>' +
+        '<div class="resp ' + (r.response ? '' : 'empty') + '">' + (r.response ? esc(r.response) : 'No response recorded yet') + '</div></div>' +
+      '<div class="chips">' +
+        (r.gap === 'Y' ? '<span class="chip gap">GAP</span>' : '') +
+        (r.priority ? '<span class="chip pri">' + esc(r.priority) + '</span>' : '') +
+        '<span class="chip ' + stClass + '">' + esc(r.status || 'Open') + '</span></div>' +
+    '</div>' +
+    '<div class="editor"><div class="grid">' +
+      fld('Client response / current process', 'response', r, 'textarea', 'span4') +
+      sel('Priority', 'priority', r, ['','Must Have','Should Have','Nice to Have']) +
+      sel('SAP B1 fit', 'fit', r, ['','Standard','Configuration','Customization','Add-on','Out of Scope']) +
+      sel('Gap', 'gap', r, ['','N','Y']) +
+      sel('Status', 'status', r, ['Open','In Discussion','Confirmed','Deferred','Closed']) +
+      fld('Proposed solution / workaround', 'solution', r, 'textarea', 'span2') +
+      fld('Notes', 'notes', r, 'textarea', 'span2') +
+      fld('Owner', 'owner', r, 'input', 'span2') +
+    '</div><div class="ed-actions">' +
+      '<button class="btn btn-primary" data-save>Save to Google Sheet</button>' +
+      '<button class="btn btn-ghost" data-close>Collapse</button>' +
+      '<span class="saved-at">' + (r.updatedAt ? 'Last saved ' + esc(r.updatedAt) : 'Never saved') + '</span>' +
+    '</div></div></div>';
+}
+function fld(label, key, r, kind, span){
+  const v = esc(r[key]);
+  const el = kind === 'textarea'
+    ? '<textarea data-k="' + key + '">' + v + '</textarea>'
+    : '<input data-k="' + key + '" value="' + v + '">';
+  return '<div class="field ' + (span||'') + '"><label>' + label + '</label>' + el + '</div>';
+}
+function sel(label, key, r, opts){
+  return '<div class="field"><label>' + label + '</label><select data-k="' + key + '">' +
+    opts.map(o => '<option' + (o === (r[key]||opts[0]) ? ' selected' : '') + '>' + o + '</option>').join('') +
+    '</select></div>';
+}
+
+function bindCard(reqId){
+  const card = $('card-' + reqId);
+  const r = ROWS.find(x => x.reqId === reqId);
+  card.querySelector('[data-toggle]').onclick = () => card.classList.toggle('open');
+  card.querySelector('[data-close]').onclick = () => card.classList.remove('open');
+  card.querySelector('[data-save]').onclick = async () => {
+    card.querySelectorAll('[data-k]').forEach(el => r[el.dataset.k] = el.value.trim());
+    await save(r);
+  };
+}
+
+/* ---------- Saving ---------- */
+async function save(record){
+  if (!API) { toast('Connect to your Google Sheet first', true); return; }
+  showLoading(true);
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'upsert', record })
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Save rejected');
+    record.updatedAt = data.updatedAt;
+    render();
+    toast(record.reqId + ' saved to Google Sheet ✓');
+  } catch (err) {
+    toast('Save failed: ' + err.message, true);
+  } finally { showLoading(false); }
+}
+
+/* ---------- Add new ---------- */
+$('btnAdd').onclick = async () => {
+  if (!ROWS.length) { toast('Connect and load your sheet first', true); return; }
+  const mod = activeModule || moduleList()[0];
+  const prefix = (ROWS.find(r => r.module === mod)?.reqId || 'NEW-000').split('-')[0];
+  const nums = ROWS.filter(r => r.reqId.startsWith(prefix + '-')).map(r => parseInt(r.reqId.split('-')[1]) || 0);
+  const reqId = prefix + '-' + String(Math.max(0, ...nums) + 1).padStart(3, '0');
+  const cat = prompt('Category for the new requirement (e.g., Pricing):', 'General');
+  if (cat === null) return;
+  const question = prompt('Requirement / question text:');
+  if (!question) return;
+  const rec = { reqId, module: mod, category: cat, question, response:'', priority:'',
+    fit:'', gap:'', solution:'', owner:'', status:'Open', notes:'' };
+  ROWS.push(rec);
+  await save(rec);
+  render();
+  const card = $('card-' + reqId);
+  if (card) { card.classList.add('open'); card.scrollIntoView({behavior:'smooth', block:'center'}); }
+};
+
+/* ---------- UI helpers ---------- */
+let toastTimer;
+function toast(msg, isErr){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 6000 : 3000);
+}
+function showLoading(on){ $('loading').classList.toggle('show', on); }
+
+$('btnConnect').onclick = connect;
+$('btnRefresh').onclick = () => API ? loadData() : toast('Connect first', true);
+$('apiUrl').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+['search','statusFilter','gapFilter'].forEach(id => $(id).addEventListener('input', renderList));
+initApiFromHash();
+</script>
+</body>
+</html>
